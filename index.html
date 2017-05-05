@@ -22,6 +22,9 @@
 		display: block;
 		margin: auto;
 	}
+	.res-img {
+		width: 100%;
+	}
 	</style>
 	<title>Hair Rendering</title>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -107,6 +110,99 @@
 				<p>The absorption coefficient describes color of the hair fiber. The coefficent is given in a {r, g, b} vector. In both papers, it is assumed that the coefficient is uniform throughout the whole fiber and it is changed in our model to render different colors of hair.</p>
 
 		<h1> Results </h1>
+			<h2> Changing h offset values </h2>
+				<table>
+					<tr>
+						<td>
+							<figure>
+								<img class="res-img" src="img/h04.png">
+								<figcaption>h = 0.4</figcaption>
+							</figure>
+						</td>
+						<td>
+							<figure>
+								<img class="res-img" src="img/h05.png">
+								<figcaption>h = 0.5</figcaption>
+							</figure>
+						</td>
+						<td>
+							<figure>
+								<img class="res-img" src="img/h06.png">
+								<figcaption>h = 0.6</figcaption>
+							</figure>
+						</td>
+					</tr>
+				</table>
+			<h2> Changing beta value with fixed alpha (alpha = -0.1 radians) </h2>
+				<table>
+					<tr>
+						<td>
+							<figure>
+								<img class="res-img" src="img/beta01.png">
+								<figcaption>beta = 0.1 (radians)</figcaption>
+							</figure>
+						</td>
+						<td>
+							<figure>
+								<img class="res-img" src="img/beta02.png">
+								<figcaption>beta = 0.2</figcaption>
+							</figure>
+						</td>
+						<td>
+							<figure>
+								<img class="res-img" src="img/beta03.png">
+								<figcaption>beta = 0.3</figcaption>
+							</figure>
+						</td>
+					</tr>
+				</table>
+			<h2> Changing h offset value with a scaled R component </h2>
+				<table>
+					<tr>
+						<td>
+							<figure>
+								<img class="res-img" src="img/scaled_R.png">
+								<figcaption>h = 0.6</figcaption>
+							</figure>
+						</td>
+						<td>
+							<figure>
+								<img class="res-img" src="img/scaled_R_2.png">
+								<figcaption>h = 0.61</figcaption>
+							</figure>
+						</td>
+						<td>
+							<figure>
+								<img class="res-img" src="img/scaled_R_3.png">
+								<figcaption> h = 0.616</figcaption>
+							</figure>
+						</td>
+					</tr>
+				</table>
+			<h2> Changing absorption coefficient for coloring </h2>
+				<table>
+					<tr>
+						<td>
+							<figure>
+								<img class="res-img" src="img/green.png">
+								<figcaption>Green</figcaption>
+							</figure>
+						</td>
+						<td>
+							<figure>
+								<img class="res-img" src="img/purple.png">
+								<figcaption>Purple</figcaption>
+							</figure>
+						</td>
+						<td>
+							<figure>
+								<img class="res-img" src="img/red.png">
+								<figcaption> Orange</figcaption>
+							</figure>
+						</td>
+					</tr>
+				</table>
+
 
 
 		<h1> Problems </h1>
