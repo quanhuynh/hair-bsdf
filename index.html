@@ -22,9 +22,6 @@
 		display: block;
 		margin: auto;
 	}
-	.res-img {
-		width: 100%;
-	}
 	</style>
 	<title>Hair Rendering</title>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -47,8 +44,8 @@
 
 		<h1> Implementation </h1>
 			<h2> The Model </h2>
-				<p> The model we used is based on Stephen Marschner's hair scattering model, extended by Eugene d'Eon (both cited in references). The model consists of two parts: longitudinal scattering and azimuthal scattering. Each part has three main components of light transport: single reflectance R (reflected once off the hair fiber), double transmittance TT (refracted into and out of the hair fiber), and trans-ref-trans TRT (refracted, reflected within hair fiber, and refracted again).</p>
-				<p> The scattering model represents each hair fiber as a cylindrical shape. The shape can be viewed as a group of stacked cones, giving the fiber its rough surface. Figure 1 shows how the model represents a hair fiber (the variables will be discussed). </p>
+				<p> The model we used is based on Stephen Marschner's hair scattering model, extended by Eugene d'Eon (both cited in references). The model consists of two parts: longitudinal scattering and azimuthal scattering. Each part consists of three main components of light scattering: single reflectance R (reflected once off the rough surface of the hair fiber), double transmittance TT (refracted into and out of the hair fiber), and trans-ref-trans TRT (refracted, reflected within hair fiber, and refracted again).</p>
+				<p> The scattering model represents each hair fiber as a cylindrical shape with a rough surface, caused by the scales that cover our hair fibers. The shape can be viewed as a group of stacked cones, giving the fiber its rough surface. Figure 1 shows how the model represents a hair fiber (the variables will be discussed). </p>
 				<figure>
 					<img src="img/report/hair-fiber.png"/>
 					<figcaption> Figure 1 - Rough cylindrical hair fiber </figcaption>
@@ -59,7 +56,7 @@
 				<ul>
 					<li> R - single reflectance: responsible for primary specular lighting. It is shifted towards the root due to the scales of hair fiber </li>
 					<li> TT - double transmittance: forward scattering component. Lighter color hair becomes bright when lit from behind (light rays go through the hair) </p>
-					<li> TRT - transmittance-reflectance-transmittance: secondary lighting, weaker than specular, but creates a diffuse gradient in hair
+					<li> TRT - transmittance-reflectance-transmittance: secondary lighting, weaker than specular, and creates a diffuse gradient in hair.
 				</ul>
 				<p> In our model, we found that the R component is miniscule compared to the other two components. Because of this, we scaled R by a large constant value to bring out specular highlights.</p>
 
@@ -75,27 +72,27 @@
 				<p> where <em>theta_h</em> is the half angle of the incident and outgoing angles and <em>g</em> is the Gaussian function: </p>
 				<img src="img/report/gp.png"/>
 				<p> The <em>p</em> parameter represents the reflectance/transmittance component, where R = 0, TT = 1, and TRT = 2. These values will be used explicitly in the azimuthal scattering model.</p>
-				<p> Marschner's paper provided a range of 5 to 10 degree for beta and a range of -5 to -10 degree for alpha. Through manual testing, we found that the optimal degrees are approximately -6 and 6 degree for alpha and beta respectively. Results can be found below, but we discovered that a higher beta value saturates the render to a more even gradient.</p>
+				<p> Marschner's paper provided a range of 5 to 10 degrees for beta and a range of -5 to -10 degrees for alpha. Through manual testing, we found that the optimal degrees are approximately -6 and 6 degrees for alpha and beta respectively. Results can be found below, but we discovered that a higher beta value desaturates the render to a more even gradient.</p>
 
 			<h2> Azimuthal Scattering </h2>
-				<p> The azimuthal scattering model is more complex than the longitudinal scattering model. This model looks at the hair fiber from a 'straight view'. The hair fiber is now modeled as a circular cross section and the position of the light ray hitting the fiber is taken into account.</p>
+				<p> The azimuthal scattering model requires more computation than the longitudinal scattering model. This model looks at the hair fiber from a 'straight view'. The hair fiber is now modeled as a circular cross section, taking the position of the light ray hitting the fiber into account.</p>
 				<figure>
 					<img src="img/report/az.png"/>
 					<figcaption> Figure 3 - Azimuthal perspective </figcaption>
 				</figure>
-				<p> The diagram shows an <em>h</em> value that represents the offset from the center of the circle where the light ray hits the hair fiber. This matters in how light is reflected and transmitted within the hair fiber. From the discussion of h, there are two approaches outlined by Marschner's and d'Eon's papers:
+				<p> The diagram shows an <em>h</em> value that represents the offset from the center of the circle where the light ray hits the hair fiber. This affects how light is reflected and transmitted within the hair fiber. For the discussion of h, the ray offset from the surface normal, there are two approaches outlined by Marschner's and d'Eon's papers:
 					<ul>
-						<li> Near field model: for rendering zoomed-in shots of hair fibers. This model calculates the exact h value based on the intersection information. This makes the model accurate for zoomed-in shots.</li>
-						<li> Far field model: for rendering zoomed-out shots of hair as a collective. This model approximates that a light ray hits the entirety of a hair fiber and integrates the offset h over the azimuthal surface.</li>
+						<li> Far field model: better for rendering zoomed-out shots of hair as a collective. This model approximates that a light ray hits the entirety of a hair fiber due to its small width, often smaller than a single pixel. It integrates the offset h over the azimuthal surface.</li>
+						<li> Near field model: better for rendering zoomed-in shots of hair fibers. This model calculates the exact h value based on the intersection information. This makes the model accurate for zoomed-in shots.</li>
 					</ul>
-				We performed two approaches in including h in the model: (1) randomizing h in a range (approximately equivalent to the far field model) and (2) fixing h to be a constant (for computational efficiency). We found that h within a range of 0.45 - 0.60 produces optimal renders. This finding came from manual testing.</p>
+				We decided to implement the far-field model. We performed two approaches for including h in the model in order to avoid the messy integration: (1) randomizing h in a range [-1, 1] and (2) fixing h to be a constant (for computational efficiency). We found that h within a range of 0.45 - 0.60 pleasing renders, while randomized h made for better looking specular highlights. This finding came from manual testing.</p>
 				<p>The azimuthal scatter is modeled by the function <em>N</em>, as described by: </p>
 				<img src="img/report/Np.png"/>
-				<p>The azimuthal scatter model depends on two terms: A and D. A is the attenuation of light depending on where the light ray hits the hair fiber (i.e. hitting right at the center would result in no attenuation). D is the Gaussian distribution of exitant azimuths (where the exiting ray is likely to point). Note: the above model is an integration, which is a far field model. Our model ignores the integration and uses h as mentioned in the above two methods (random and fixed).</p>
+				<p>The azimuthal scattering model depends on two terms: A and D. A is the attenuation of light depending on where the light ray hits the hair fiber (i.e. hitting right at the center would result in no attenuation). D is the Gaussian distribution of exitant azimuths (where the exiting ray is likely to point). Note: the above model is an integration, which is a far field model. Our model ignores the integration and uses h as mentioned in the above two methods (random and fixed).</p>
 				<h3>Gaussian distribution D</h3>
 					<p> D is described by: </p>
 					<img src="img/report/D.png"/>
-					<p> In our model, we did not sum from negative infinity to positive infinity, but approximated the summation with k = -1, 0, and 1. The Phi term in the N function is defined by:</p>
+					<p> In our model, rather than sum from negative infinity to positive infinity, we approximated the summation with k = -1, 0, and 1. The Phi term in the N function is defined by:</p>
 					<img src="img/report/Phi.png"/>
 					<p> and eta_prime, a modified index of refraction to take into account the roughness of the fiber, is </p>
 					<img src="img/report/eta_prime.png"/>
@@ -107,108 +104,114 @@
 					<img src="img/report/T.png"/>
 					<p> where mu_prime is the (reduced) absorption coefficient of the hair, theta_d is the difference angle between the incident and outgoing angles, and the gamma_t term is defined above under the Gaussian distribution D.</p>
 			<h2> Absorption Coefficient </h2>
-				<p>The absorption coefficient describes color of the hair fiber. The coefficent is given in a {r, g, b} vector. In both papers, it is assumed that the coefficient is uniform throughout the whole fiber and it is changed in our model to render different colors of hair.</p>
+				<p>The absorption coefficient describes color of the hair fiber, comprised of the absorption cross sections of eumelanin and pheomelanin. The coefficent is given in a {r, g, b} vector. In both papers, it is assumed that the coefficient is uniform throughout the whole fiber and it is changed in our model to render different colors of hair.</p>
 
 		<h1> Results </h1>
-			<h2> Changing h offset values </h2>
-				<table>
-					<tr>
-						<td>
-							<figure>
-								<img class="res-img" src="img/h04.png">
-								<figcaption>h = 0.4</figcaption>
-							</figure>
-						</td>
-						<td>
-							<figure>
-								<img class="res-img" src="img/h05.png">
-								<figcaption>h = 0.5</figcaption>
-							</figure>
-						</td>
-						<td>
-							<figure>
-								<img class="res-img" src="img/h06.png">
-								<figcaption>h = 0.6</figcaption>
-							</figure>
-						</td>
-					</tr>
-				</table>
-			<h2> Changing beta value with fixed alpha (alpha = -0.1 radians) </h2>
-				<table>
-					<tr>
-						<td>
-							<figure>
-								<img class="res-img" src="img/beta01.png">
-								<figcaption>beta = 0.1 (radians)</figcaption>
-							</figure>
-						</td>
-						<td>
-							<figure>
-								<img class="res-img" src="img/beta02.png">
-								<figcaption>beta = 0.2</figcaption>
-							</figure>
-						</td>
-						<td>
-							<figure>
-								<img class="res-img" src="img/beta03.png">
-								<figcaption>beta = 0.3</figcaption>
-							</figure>
-						</td>
-					</tr>
-				</table>
-			<h2> Changing h offset value with a scaled R component </h2>
-				<table>
-					<tr>
-						<td>
-							<figure>
-								<img class="res-img" src="img/scaled_R.png">
-								<figcaption>h = 0.6</figcaption>
-							</figure>
-						</td>
-						<td>
-							<figure>
-								<img class="res-img" src="img/scaled_R_2.png">
-								<figcaption>h = 0.61</figcaption>
-							</figure>
-						</td>
-						<td>
-							<figure>
-								<img class="res-img" src="img/scaled_R_3.png">
-								<figcaption> h = 0.616</figcaption>
-							</figure>
-						</td>
-					</tr>
-				</table>
-			<h2> Changing absorption coefficient for coloring </h2>
-				<table>
-					<tr>
-						<td>
-							<figure>
-								<img class="res-img" src="img/green.png">
-								<figcaption>Green</figcaption>
-							</figure>
-						</td>
-						<td>
-							<figure>
-								<img class="res-img" src="img/purple.png">
-								<figcaption>Purple</figcaption>
-							</figure>
-						</td>
-						<td>
-							<figure>
-								<img class="res-img" src="img/red.png">
-								<figcaption> Orange</figcaption>
-							</figure>
-						</td>
-					</tr>
-				</table>
+		<p>First, we observe the differences with different beta values, without specular highlights.</p>
+		<div align="middle">
+		  <table style="width=100%">
+		    <tr>
+		      <td>
+		        <img src="img/alpha01beta01.png" align="middle" width="400px"/>
+		        <figcaption align="middle">beta = 0.1</figcaption>
+		      </td>
+		      <td>
+		        <img src="img/alpha01beta02.png" align="middle" width="400px"/>
+		        <figcaption align="middle">beta = 0.2</figcaption>
+		      </td>
+		      <td>
+		        <img src="img/alpha01beta03.png" align="middle" width="400px"/>
+		        <figcaption align="middle">beta = 0.3</figcaption>
+		      </td>
+		    </tr>
+		  </table>
+		</div>
 
+		<p>Now, lets observe the results of having fixed h, as well as randomized h.</p>
+		<div align="middle">
+		  <table style="width=100%">
+		    <tr>
+		      <td>
+		        <img src="img/h04.png" align="middle" width="400px"/>
+		        <figcaption align="middle">h = 0.4</figcaption>
+		      </td>
+		      <td>
+		        <img src="img/h05.png" align="middle" width="400px"/>
+		        <figcaption align="middle">h = 0.5</figcaption>
+		      </td>
+		      <td>
+		        <img src="img/h06.png" align="middle" width="400px"/>
+		        <figcaption align="middle">h = 0.6</figcaption>
+		      </td>
+		    </tr>
+		  </table>
+		</div>
 
+		<p>We now include the specular component using a fixed h of 0.616, and how different scalars change its impact.</p>
+		<div align="middle">
+		  <table style="width=100%">
+		    <tr>
+		      <td>
+		        <img src="img/scaled_R.png" align="middle" width="400px"/>
+		        <figcaption align="middle">High scalar</figcaption>
+		      </td>
+		      <td>
+		        <img src="img/scaled_R_2.png" align="middle" width="400px"/>
+		        <figcaption align="middle">Medium scalar</figcaption>
+		      </td>
+		      <td>
+		        <img src="img/scaled_R_3.png" align="middle" width="400px"/>
+		        <figcaption align="middle">Small scalar</figcaption>
+		      </td>
+		    </tr>
+		  </table>
+		</div>
+
+		<p>With a small scalar, we also rendered different hair colors by changing the absorption coefficients of eumelanin and pheomelanin.</p>
+		<div align="middle">
+		  <table style="width=100%">
+		    <tr>
+		      <td>
+		        <img src="img/all.png" align="middle" width="400px"/>
+		        <figcaption align="middle">Purple</figcaption>
+		      </td>
+		      <td>
+		        <img src="img/+1+39-7e19h616.png" align="middle" width="400px"/>
+		        <figcaption align="middle">Green</figcaption>
+		      </td>
+		      <td>
+		        <img src="img/+4+6-2-1e19h616.png" align="middle" width="400px"/>
+		        <figcaption align="middle">Red</figcaption>
+		      </td>
+		    </tr>
+		  </table>
+		</div>
+
+		<p>We also rendered specular highlights using random h. This required a significantly small scalar, but was still needed to make highlights visible. These highlights look more convincing.</p>
+		<div align="middle">
+		  <table style="width=100%">
+		    <tr>
+		      <td>
+		        <img src="img/randhx100.png" align="middle" width="400px"/>
+		        <figcaption align="middle">Brown</figcaption>
+		      </td>
+		      <td>
+		        <img src="img/greenx100.png" align="middle" width="400px"/>
+		        <figcaption align="middle">Green</figcaption>
+		      </td>
+		      <td>
+		        <img src="img/redx100.png" align="middle" width="400px"/>
+		        <figcaption align="middle">Red</figcaption>
+		      </td>
+		    </tr>
+		  </table>
+		</div>
 
 		<h1> Problems </h1>
 		<ul>
 			<li> <strong>h offset integration</strong>: For azimuthal scattering, we did not know how to integrate over h in C++ code, so we could not fully take advantage of the far field model given to us. Because of this, we resorted to randomizing h, which is an approximate equivalence of integrating, though it produces more noise </li>
 			<li> <strong>h offset calculation</strong>: We did not know how to calculate h based on the intersection information given to us by the Mitsuba renderer, so we also could not fully take advantage of the near field model. We replaced this by substituting a fixed h.</li>
+			<li> <strong>R component</strong>: We had trouble making the specular component show, until we realized it was very small compared to the rest of the components. Furthermore it did not converge well like the rest of the values, resulting in very noisy highlights. It took much experimentation to find the best amount we could.</li>
 		</ul>
 
 
@@ -216,8 +219,8 @@
 		<ul>
 			<li> How to build a custom BSDF in Mitsuba </li>
 			<li> Hair is hard to model due to its collective as well as individual behavior </li> 
-			<li> An accurate, physically-based hair rendering model </li>
-			<li> Mitsuba is hard to develop in </li>
+			<li> The math behind an accurate, physically-based hair rendering model </li>
+			<li> Mitsuba is not very simple to develop in </li>
 		</ul>
 
 
@@ -225,10 +228,11 @@
 		<p><a href="http://graphics.stanford.edu/papers/hair/hair-sg03final.pdf">Light Scattering from Human Hair Fibers - Stephen Marschner </a></p>
 		<p><a href="http://www.eugenedeon.com/wp-content/uploads/2014/04/egsrhair.pdf">An Energy Conserving Hair Reflectance Model - Eugene d'Eon</a></p>
 		<p><a href="http://mitsuba-renderer.org">Mitsuba Renderer</a></p>
-		<p><a href="https://benedikt-bitterli.me/resources/"> Benedikt Bitterli hair model </a></p>
+		<p><a href="https://benedikt-bitterli.me/resources/"> Benedikt Bitterli's hair model </a></p>
 
 		<h1> Contributions </h1>
 		<p> <strong>Michael Wan</strong> - summarized mathematical model of hair scattering; came up with fixed h approach; came up with R scale approach; tested different h settings; tested diferent R scale settings </p>
 		<p> <strong> Quan Huynh</strong> - implemented mathematical functions in bsdf code; came up with randomized h approach; tested different alpha and beta settings; created presentation slides and report </p>
+		<p> Though in the end we collaborated a lot on all aspects of the project. </p>
 	</body>
 	</html>
